@@ -26,14 +26,25 @@ templates = Jinja2Templates(directory=str(FRONTEND_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR / "static")), name="static")
 
 # Config
-DEEPSEEK_API_KEY = (
-    os.getenv("DEEPSEEK_API_KEY")
-    or os.getenv("DEFAULT_DEEPSEEK_API_KEY")
-    or os.getenv("OPENROUTER_API_KEY")
-    or os.getenv("OPENAI_API_KEY")
-)
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-r1-0528:free"))
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1"))
+_KEY_ORDER = ["OPENROUTER_API_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "DEFAULT_DEEPSEEK_API_KEY"]
+_KEY_SOURCE = None
+_KEY_VALUE = None
+for _k in _KEY_ORDER:
+    _v = os.getenv(_k)
+    if _v:
+        _KEY_SOURCE = _k
+        _KEY_VALUE = _v
+        break
+DEEPSEEK_API_KEY = _KEY_VALUE
+_IS_OPENROUTER_KEY = bool((_KEY_VALUE or "").startswith("sk-or-"))
+
+# If it's an OpenRouter key, force OpenRouter base_url/model defaults
+if _IS_OPENROUTER_KEY:
+    DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL") or os.getenv("OPENROUTER_URL") or "https://openrouter.ai/api/v1"
+    DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL") or os.getenv("OPENROUTER_MODEL") or "deepseek/deepseek-r1-0528"
+else:
+    DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1"))
+    DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-r1-0528"))
 DEEPSEEK_MAX_TOKENS = int(os.getenv("DEEPSEEK_MAX_TOKENS", "2500"))
 OPENROUTER_SITE_URL = os.getenv("OPENROUTER_SITE_URL")
 OPENROUTER_SITE_NAME = os.getenv("OPENROUTER_SITE_NAME")
@@ -71,9 +82,17 @@ async def startup_openrouter_client():
     if DEEPSEEK_API_KEY:
         _openai_client = openai.AsyncOpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
         print("[openrouter] client initialized (base_url:", DEEPSEEK_BASE_URL, "model:", DEEPSEEK_MODEL, ")")
+        try:
+            print("[openrouter] key source:", _KEY_SOURCE, "prefix:", (DEEPSEEK_API_KEY or "")[:4] + "****")
+        except Exception:
+            pass
     else:
         _openai_client = None
-        print("[openrouter] no API key found; AI disabled")
+        try:
+            print("[openrouter] no API key found; checked:", ", ".join(_KEY_ORDER))
+        except Exception:
+            pass
+        print("[openrouter] AI disabled")
 
 async def shutdown_openrouter_client():
     global _openai_client
