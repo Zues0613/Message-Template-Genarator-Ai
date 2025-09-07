@@ -8,4 +8,5 @@ anyio==4.10.0
 starlette==0.47.3
 pydantic==2.11.7
 watchfiles==1.1.0
+python-multipart==0.0.20
 
