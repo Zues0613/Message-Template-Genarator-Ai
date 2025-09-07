@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+
+  <!-- Tailwind via CDN (good for prototypes) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    /* Show a spinner while HTMX requests are in-flight */
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: inline-flex; }
+  </style>
+  <!-- Modern font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900" style="font-family: 'Inter', sans-serif;">
+  <header class="relative">
+    <div class="absolute inset-0 -z-10 opacity-40 blur-2xl bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200"></div>
+    <div class="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-600 to-fuchsia-600 shadow-lg shadow-indigo-500/30"></div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">WhatsApp CRM</h1>
+        <span class="ml-2 hidden md:inline-flex rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium px-3 py-1">AI Templates</span>
+      </div>
+      <div class="text-sm text-gray-500">FastAPI · HTMX · Tailwind</div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center text-sm text-gray-500 py-10">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur px-4 py-2 shadow-sm ring-1 ring-gray-200">
+        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        <span>Ready</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

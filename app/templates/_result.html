@@ -1,0 +1,92 @@
+<!-- app/templates/_result.html -->
+<div class="relative overflow-hidden rounded-2xl bg-white/85 backdrop-blur ring-1 ring-gray-200 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] p-6">
+  <div class="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-gradient-to-tr from-indigo-100 to-pink-100 blur-2xl"></div>
+  <div class="relative flex items-start justify-between">
+    <div class="space-y-1">
+      <h3 class="text-xl font-bold tracking-tight">Generated Message</h3>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 font-medium">Length: {{ length }}</span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 font-medium">Source: {{ source }}</span>
+      </div>
+
+      {% if error_msg %}
+        <div class="mt-2 text-sm text-red-600">
+          <strong>Error generating message from AI:</strong>
+          <div class="mt-1 whitespace-pre-wrap">{{ error_msg }}</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <p class="text-sm text-gray-500 mt-3">You can edit the message below before using it. Keep the <code>{name}</code> placeholder.</p>
+
+  <textarea
+    id="generatedText"
+    name="generatedText"
+    class="mt-4 w-full min-h-[160px] rounded-xl border border-gray-200/80 bg-white/70 backdrop-blur px-4 py-3 shadow-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300"
+    oninput="(function(el){ var c = document.getElementById('charCount'); if(c){ c.textContent = el.value.length + ' characters'; } })(this)"
+  >{{ message | e }}</textarea>
+
+  <div class="mt-2 text-xs text-gray-500" aria-live="polite">
+    <span id="charCount">{{ (message | length) if message else 0 }} characters</span>
+  </div>
+
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition focus:ring-4 focus:ring-emerald-100"
+      title="Copy message to clipboard"
+      onclick="(async () => { try { await navigator.clipboard.writeText(document.getElementById('generatedText').value); showToast('Copied to clipboard'); const t=this.innerHTML; this.innerHTML='<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'currentColor\' class=\'h-5 w-5\'><path d=\'M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5z\'/></svg><span>Copied</span>'; this.disabled=true; setTimeout(()=>{ this.disabled=false; this.innerHTML=t; }, 1200); } catch(e){ showToast('Copy failed', true); } })()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M8 7a3 3 0 013-3h7a3 3 0 013 3v7a3 3 0 01-3 3h-1v-2h1a1 1 0 001-1V7a1 1 0 00-1-1h-7a1 1 0 00-1 1v1H8V7z"/><path d="M5 9a2 2 0 00-2 2v7a2 2 0 002 2h7a2 2 0 002-2v-7a2 2 0 00-2-2H5zm0 2h7v7H5v-7z"/></svg>
+      <span>Copy to clipboard</span>
+    </button>
+
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white/80 px-4 py-2 text-gray-800 hover:bg-white transition"
+      onclick="alert('In real app: insert into broadcast composer');"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M3.4 20.4l17.8-8.4L3.4 3.6l-.9 6.5 10.2 1.9-10.2 1.9.9 6.5z"/></svg>
+      Use now
+    </button>
+
+    <!-- Retry button: re-submits original prompt & options via HTMX to /generate -->
+    {% if prompt %}
+    <form hx-post="/generate" hx-target="#result" hx-swap="innerHTML" hx-on:htmx:beforeRequest="document.getElementById('result').innerHTML = document.getElementById('resultLoaderTpl').innerHTML" hx-disabled-elt="button, .retry-btn" class="inline-block">
+      <input type="hidden" name="prompt" value="{{ prompt | e }}" />
+      <input type="hidden" name="tone" value="{{ request.form.tone if request.form.tone else 'informal' }}" />
+      <input type="hidden" name="length" value="{{ length }}" />
+      <input type="hidden" name="placeholders" value="{{ request.form.placeholders if request.form.placeholders else (placeholders or '') }}" />
+      <input type="hidden" name="audience" value="{{ request.form.audience if request.form.audience else (audience or '') }}" />
+      <button type="submit" class="retry-btn inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 px-4 py-2 hover:bg-amber-100 transition relative">
+        <span class="htmx-indicator absolute inset-0 flex items-center justify-center">
+          <svg class="animate-spin h-5 w-5 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M12 6V3l-4 4 4 4V8c2.757 0 5 2.243 5 5a5 5 0 11-10 0H5a7 7 0 1014 0c0-3.86-3.141-7-7-7z"/></svg>
+        Retry AI generation
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <script>
+    function showToast(message, isError){
+      try{
+        var existing = document.getElementById('toastNotif');
+        if(existing){ existing.remove(); }
+        var t = document.createElement('div');
+        t.id = 'toastNotif';
+        t.setAttribute('role','status');
+        t.className = 'fixed top-5 right-5 z-50 px-4 py-2 rounded-xl shadow-lg text-sm ' + (isError ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white');
+        t.textContent = message || 'Done';
+        document.body.appendChild(t);
+        requestAnimationFrame(function(){ t.style.opacity = '1'; });
+        setTimeout(function(){ if(t){ t.style.transition = 'opacity 300ms'; t.style.opacity = '0'; setTimeout(function(){ t && t.remove(); }, 320); } }, 1400);
+      }catch(e){ /* noop */ }
+    }
+  </script>
+</div>
