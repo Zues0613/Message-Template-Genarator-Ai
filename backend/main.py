@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, HTTPException, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import pathlib
@@ -9,6 +9,7 @@ import time
 import random
 import openai
 from typing import Optional
+from pydantic import BaseModel
 from dotenv import load_dotenv, find_dotenv
 
 # Resolve directories
@@ -74,6 +75,24 @@ def detect_keyword(p: str) -> str:
     return "generic"
 
 LENGTH_TOKEN_MAP = {"short": 120, "medium": 600, "long": 1200}
+
+# Pydantic models for n8n API
+class MessageRequest(BaseModel):
+    prompt: str
+    tone: str = "informal"
+    length: str = "medium"
+    placeholders: str = ""
+    audience: str = ""
+
+class MessageResponse(BaseModel):
+    success: bool
+    message: str
+    source: str
+    error_msg: Optional[str] = None
+    prompt: str
+    length: str
+    placeholders: str
+    audience: str
 
 _openai_client: Optional[openai.AsyncOpenAI] = None
 
@@ -308,6 +327,58 @@ async def generate(
             "placeholders": placeholders,
             "audience": audience,
         }
+    )
+
+@app.post("/api/generate", response_model=MessageResponse)
+async def generate_api(request_data: MessageRequest):
+    """
+    API endpoint for n8n integration.
+    Accepts JSON data and returns JSON response.
+    """
+    prompt = request_data.prompt.strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+    
+    # Map length to tokens
+    mapped_tokens = LENGTH_TOKEN_MAP.get(request_data.length, LENGTH_TOKEN_MAP["medium"])
+    if request_data.length == "medium":
+        mapped_tokens = int(mapped_tokens * 1.1)
+    elif request_data.length == "long":
+        mapped_tokens = int(mapped_tokens * 1.15)
+    max_tokens = min(mapped_tokens, DEEPSEEK_MAX_TOKENS)
+
+    try:
+        message = await generate_with_openrouter_via_client(
+            prompt, 
+            request_data.tone, 
+            max_tokens, 
+            request_data.placeholders, 
+            request_data.audience, 
+            request_data.length
+        )
+        source = "openrouter"
+        error_msg = None
+        success = True
+    except HTTPException as e:
+        message = ""
+        source = "ai_error"
+        error_msg = str(e.detail or e)
+        success = False
+    except Exception as e:
+        message = ""
+        source = "ai_error"
+        error_msg = str(e)
+        success = False
+
+    return MessageResponse(
+        success=success,
+        message=message,
+        source=source,
+        error_msg=error_msg,
+        prompt=prompt,
+        length=request_data.length,
+        placeholders=request_data.placeholders,
+        audience=request_data.audience
     )
 
 
