@@ -1,0 +1,83 @@
+<!-- Message Template Generator Form -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid gap-6">
+  <div class="bg-white rounded-xl shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Generate a message template</h2>
+
+    <form
+      hx-post="./generate"
+      hx-target="#result"
+      hx-swap="innerHTML"
+      class="grid gap-4"
+    >
+      <div>
+        <label class="block text-sm font-medium mb-1">Prompt</label>
+        <input
+          name="prompt"
+          required
+          placeholder="e.g. Diwali greetings for customers"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Placeholders</label>
+          <input
+            name="placeholders"
+            placeholder="e.g. name, discount, code"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          />
+          <p class="text-xs text-gray-500 mt-1">Comma-separated. Default: {name}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Audience</label>
+          <input
+            name="audience"
+            placeholder="e.g. premium customers, VIP members"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium">Tone</label>
+          <select
+            name="tone"
+            class="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="informal" selected>Informal</option>
+            <option value="formal">Formal</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium">Length</label>
+          <select
+            name="length"
+            class="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="short">Short (1-2 sentences)</option>
+            <option value="medium" selected>Medium (4-5 sentences)</option>
+            <option value="long">Long (7-9 sentences)</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          class="ml-auto inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-white hover:bg-black/90"
+        >
+          Generate
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div id="result"><!-- HTMX will render the generated block here --></div>
+</div>
+{% endblock %}
+

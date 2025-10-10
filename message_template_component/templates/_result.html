@@ -1,0 +1,61 @@
+<!-- Generated Message Result -->
+<div class="bg-white rounded-xl shadow p-6">
+  <div class="flex items-start justify-between">
+    <div>
+      <h3 class="text-lg font-semibold">Generated Message</h3>
+      <div class="text-sm text-gray-500 mt-1">
+        Requested: <span class="font-medium">{{ length }}</span> · Source: <span class="font-medium">{{ source }}</span>
+      </div>
+
+      {% if error_msg %}
+        <div class="mt-2 text-sm text-red-600">
+          <strong>Error generating message from AI:</strong>
+          <div class="mt-1 whitespace-pre-wrap">{{ error_msg }}</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <p class="text-sm text-gray-500 mt-3">
+    You can edit the message below before using it. Keep the placeholders (e.g., <code>{name}</code>).
+  </p>
+
+  <textarea
+    id="generatedText"
+    name="generatedText"
+    class="mt-4 w-full min-h-[140px] rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+  >{{ message | e }}</textarea>
+
+  <div class="mt-4 flex items-center gap-3 flex-wrap">
+    <button
+      type="button"
+      class="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+      onclick="navigator.clipboard.writeText(document.getElementById('generatedText').value).then(()=>{ this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy to clipboard',1200); }).catch(()=>{ alert('Copy failed'); });"
+    >
+      Copy to clipboard
+    </button>
+
+    <button
+      type="button"
+      class="rounded-md bg-gray-900 text-white px-3 py-2 hover:bg-black/90"
+      onclick="alert('In your app: integrate this with your broadcast composer');"
+    >
+      Use now
+    </button>
+
+    <!-- Retry button: re-submits original prompt & options via HTMX -->
+    {% if prompt %}
+    <form hx-post="./generate" hx-target="#result" hx-swap="innerHTML" class="inline-block">
+      <input type="hidden" name="prompt" value="{{ prompt | e }}" />
+      <input type="hidden" name="tone" value="informal" />
+      <input type="hidden" name="length" value="{{ length }}" />
+      <input type="hidden" name="placeholders" value="{{ placeholders | e }}" />
+      <input type="hidden" name="audience" value="{{ audience | e }}" />
+      <button type="submit" class="rounded-md border border-yellow-500 text-yellow-700 px-3 py-2 hover:bg-yellow-50">
+        Retry AI generation
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
